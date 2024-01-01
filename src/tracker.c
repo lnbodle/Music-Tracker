@@ -5,13 +5,14 @@
 #include "tracker.h"
 #include "utils/draw_utils.h"
 #include "utils/audio_utils.h"
+#include "utils/math_utils.h"
 #include "instrument.h"
 #include "common.h"
 #include "view/phrase_view.h"
 
 void tracker_init(Tracker *tracker)
 {
-
+    tracker->tempo = 120;
     tracker->phrase_index = 0;
     tracker->step_index = 0;
 
@@ -27,7 +28,7 @@ void tracker_init(Tracker *tracker)
         for (int j = 0; j < STEP_NUMBER; j++)
         {
             tracker->phrases[i].steps[j].note = 0;
-            tracker->phrases[i].steps[j].octave = 4;
+            tracker->phrases[i].steps[j].octave = 5;
             tracker->phrases[i].steps[j].instrument_id = i;
         }
     }
@@ -35,19 +36,7 @@ void tracker_init(Tracker *tracker)
 
 void tracker_free(Tracker *tracker)
 {
-
     audio_free(&tracker->audio);
-}
-
-void tracker_next(Tracker *tracker)
-{
-    tracker->phrase_index++;
-    if (tracker->phrase_index > PHRASE_NUMBER - 1)
-        tracker->phrase_index = 0;
-}
-
-void tracker_previous(Tracker *tracker)
-{
 }
 
 void tracker_draw(SDL_Renderer *renderer, Tracker *tracker)
@@ -67,15 +56,8 @@ void tracker_draw(SDL_Renderer *renderer, Tracker *tracker)
     case MODE_EDIT_INSTRUMENT:
         mode = "INSTRUMENT";
     }
-    draw_text(renderer, mode, SCREEN_WIDTH - strlen(mode) * 8, 0);
 
-    char *playing;
-    if (tracker->is_playing) {
-        playing = ">";
-    } else {
-        playing = "||";
-    }
-    draw_text(renderer, playing, SCREEN_WIDTH - strlen(playing) * 8, 8);
+    draw_text(renderer, mode, SCREEN_WIDTH - strlen(mode) * 8, 0);
 
     phrase_view(tracker, renderer);
 }
@@ -84,7 +66,7 @@ void tracker_tick(Tracker *tracker, int time)
 {
     if (tracker->is_playing)
     {
-        if (time % 100 == 0)
+        if (time % (1000 * 60 / tracker->tempo) == 0)
         {
             tracker_tick_phrases(tracker);
         }
@@ -96,22 +78,18 @@ void tracker_tick_phrases(Tracker *tracker)
     for (int i = 0; i < PHRASE_NUMBER; i++)
     {
         Phrase *phrase = &tracker->phrases[i];
+
+        phrase->step_index = increase_index(phrase->step_index, STEP_NUMBER);
+
         Step *current_step = &phrase->steps[phrase->step_index];
 
-        instrument_off(&tracker->audio.instruments[current_step->instrument_id]);
+        instrument_off(&tracker->audio.instruments[current_step->instrument_id]); //Need to be a note parameter (length)
 
         if (current_step->note != 0)
         {
             float frequency = freq(current_step->note, ' ', current_step->octave);
             instrument_on(&tracker->audio.instruments[current_step->instrument_id], frequency);
         }
-
-        phrase->step_index++;
-        if (phrase->step_index >= STEP_NUMBER)
-        {
-            phrase->step_index = 0;
-        }
-        
     }
 }
 
@@ -150,9 +128,14 @@ void tracker_event(Tracker *tracker, int *states)
 
         if (states[Right])
         {
-            tracker->phrase_index++;
-            if (tracker->phrase_index >= PHRASE_NUMBER)
-                tracker->phrase_index = 0;
+            
+            tracker->phrase_index = increase_index(tracker->phrase_index, STEP_NUMBER);
+        }
+
+        if (states[Left])
+        {
+            
+            tracker->phrase_index = decrease_index(tracker->phrase_index, STEP_NUMBER); 
         }
 
         break;
@@ -166,16 +149,12 @@ void tracker_event(Tracker *tracker, int *states)
 
         if (states[Down])
         {
-            tracker->step_index++;
-            if (tracker->step_index > STEP_NUMBER)
-                tracker->step_index = 0;
+            tracker->step_index = increase_index(tracker->step_index, STEP_NUMBER);
         }
 
         if (states[Up])
         {
-            tracker->step_index--;
-            if (tracker->step_index < 0)
-                tracker->step_index = STEP_NUMBER;
+            tracker->step_index = decrease_index(tracker->step_index, STEP_NUMBER);
         }
 
         if (states[Right])
@@ -187,7 +166,7 @@ void tracker_event(Tracker *tracker, int *states)
             }
             else
             {
-                current_step->note--;
+                current_step->note = increase_index(current_step->note, NOTE_NUMBER);
             }
         }
 
@@ -199,7 +178,7 @@ void tracker_event(Tracker *tracker, int *states)
             }
             else
             {
-                current_step->note++;
+                current_step->note = decrease_index(current_step->note, NOTE_NUMBER);
             }
         }
 

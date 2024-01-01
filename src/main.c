@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 
     SDL_AddTimer(1, tick, time);
 
-    SDL_Window *window = SDL_CreateWindow("TRACKER", SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE);
+    SDL_Window *window = SDL_CreateWindow("TRACKER", SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH * 3, SCREEN_HEIGHT * 3, SDL_WINDOW_RESIZABLE);
     if (window == NULL)
     {
         printf("SDL_Window can't be initalize");
@@ -62,10 +62,6 @@ int main(int argc, char *argv[])
 
     int quit = 0;
     SDL_Event e;
-
-    Uint64 NOW = SDL_GetPerformanceCounter();
-    Uint64 LAST = 0;
-    double deltaTime = 0;
 
     init();
 

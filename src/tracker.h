@@ -34,17 +34,14 @@ typedef struct Tracker
     size_t phrase_index;
     size_t step_index;
     int is_playing;
+    int tempo;
 } Tracker;
 
 void tracker_init(Tracker *tracker);
 void tracker_free(Tracker *tracker);
 void tracker_tick(Tracker *tracker, int time);
-void tracker_draw(SDL_Renderer *renderer, Tracker *tracker);
-void tracker_event(Tracker *tracker, int *states);
-
-void tracker_next(Tracker *tracker);
-void tracker_previous(Tracker *tracker);
-
+void tracker_draw(SDL_Renderer *renderer, Tracker *tracker); //TODO : Need to be moved
+void tracker_event(Tracker *tracker, int *states); //TODO : Need to be moved
 void tracker_tick_phrases(Tracker *tracker);
 
 #endif
