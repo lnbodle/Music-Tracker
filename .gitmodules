@@ -1,6 +1,0 @@
-[submodule "leaf"]
-	path = lib/leaf
-	url = https://github.com/spiricom/leaf
-[submodule "lib/soundpipe"]
-	path = lib/soundpipe
-	url = https://github.com/SeesePlusPlus/soundpipe.git

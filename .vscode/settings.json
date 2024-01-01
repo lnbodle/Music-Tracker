@@ -1,0 +1,15 @@
+{
+    "files.associations": {
+        "instrument.h": "c",
+        "audio.h": "c",
+        "instruments.h": "c",
+        "cmath": "c",
+        "soundpipe.h": "c",
+        "ratio": "c",
+        "sdl2_inprint.h": "c",
+        "draw_utils.h": "c",
+        "audio_utils.h": "c",
+        "sdl.h": "c",
+        "tracker.h": "c"
+    }
+}
