@@ -55,7 +55,7 @@ void audio_update(Audio *audio)
 
         sp_bigverb_compute(audio->sp, audio->reverb, &out, &input_0, &reverb_out_0, &reverb_out_1);
 
-        audio->buffers[0][i] = (out * 0.9f + reverb_out_0 * 0.1f);
+        audio->buffers[0][i] = out;/*(out * 0.8f + reverb_out_0 * 0.2f)*/;
     }
 };
 

@@ -1,11 +1,19 @@
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 
 #include <stdio.h>
+#include "../lib/SDL_inprint/SDL2_inprint.h"
+#include "utils/draw_utils.h"
 #include "tracker.h"
 #include "common.h"
 
+#include "../lib/SDL_FontCache/SDL_FontCache.h"
+
 Tracker tracker;
+
+	
+//FC_Font* font;
 
 SDL_TimerID tick_id;
 int time = 0;
@@ -26,7 +34,7 @@ void init()
 
 void draw(SDL_Renderer *renderer)
 {
-    tracker_draw(renderer, &tracker);
+   tracker_draw(renderer, &tracker);
 }
 
 int main(int argc, char *argv[])
@@ -40,7 +48,7 @@ int main(int argc, char *argv[])
 
     SDL_AddTimer(1, tick, time);
 
-    SDL_Window *window = SDL_CreateWindow("TRACKER", SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH * 3, SCREEN_HEIGHT * 3, SDL_WINDOW_RESIZABLE);
+    SDL_Window *window = SDL_CreateWindow("TRACKER", 128, 128, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
     if (window == NULL)
     {
         printf("SDL_Window can't be initalize");
@@ -54,24 +62,33 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    if (TTF_Init() == -1)
+    {
+        fprintf(stderr, "Erreur d'initialisation de TTF_Init : %s\n", TTF_GetError());
+        exit(EXIT_FAILURE);
+    }
+    	
     inrenderer(renderer);
     prepare_inline_font();
 
-    SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
-    SDL_RenderSetIntegerScale(renderer, 1);
+    /*SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
+    SDL_RenderSetIntegerScale(renderer, 1);*/
 
     int quit = 0;
     SDL_Event e;
 
     init();
 
+    init_font(renderer);
+
     while (!quit)
     {
         SDL_RenderClear(renderer);
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        set_draw_color(renderer, COLOR_BACK);
         SDL_RenderFillRect(renderer, NULL);
-        
+
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
         draw(renderer);
 
         SDL_RenderPresent(renderer);
@@ -88,71 +105,24 @@ int main(int argc, char *argv[])
             {
 
                 SDL_Keycode code = e.key.keysym.sym;
-                
-                switch (code)
-                {
-                case SDLK_LEFT:
-                    states[Left] = 1;
-                    break;
-                case SDLK_RIGHT:
-                    states[Right] = 1;
-                    break;
-                case SDLK_UP:
-                    states[Up] = 1;
-                    break;
-                case SDLK_DOWN:
-                    states[Down] = 1;
-                    break;
-                case SDLK_LSHIFT:
-                    states[Shift] = 1;
-                    break;
-                case SDLK_SPACE:
-                    states[Action_1] = 1;
-                    break;
-                case SDLK_a:
-                    states[Action_2] = 1;
-                default:
-                    break;
-                }
-                tracker_event(&tracker, &states);
+
+                event_set_states(&tracker.event, code, 1);
+                tracker_event(&tracker);
             }
 
             if (e.type == SDL_KEYUP)
             {
                 SDL_Keycode code = e.key.keysym.sym;
-                switch (code)
-                {
-                case SDLK_LEFT:
-                    states[Left] = 0;
-                    break;
-                case SDLK_RIGHT:
-                    states[Right] = 0;
-                    break;
-                case SDLK_UP:
-                    states[Up] = 0;
-                    break;
-                case SDLK_DOWN:
-                    states[Down] = 0;
-                    break;
-                case SDLK_LSHIFT:
-                    states[Shift] = 0;
-                    break;
-                case SDLK_SPACE:
-                    states[Action_1] = 0;
-                    break;
-                case SDLK_a:
-                    states[Action_2] = 0;
-                    break;
-                default:
-                    break;
-                }
+                event_set_states(&tracker.event, code, 0);
             }
-            
         }
     }
 
     tracker_free(&tracker);
-    kill_inline_font();
+    //kill_inline_font();
+
+    close_font();
+    //TTF_CloseFont(font);
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

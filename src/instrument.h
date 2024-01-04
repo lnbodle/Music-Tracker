@@ -3,13 +3,28 @@
 
 #include <soundpipe.h>
 
+typedef enum {
+    SAW,
+    SQUARE
+} Waveshape;
+
 typedef struct
 {
     sp_adsr *adsr;
-    sp_osc *osc;
-    sp_ftbl *ft;
+    /*sp_osc *osc;
+    sp_ftbl *ft;*/
+
+    sp_butlp *filter;
+
+    sp_blsquare *square;
+    sp_blsaw *saw;
+    sp_bltriangle *triangle;
+
+    Waveshape waveshape;
     float gate;
     float frequency;
+
+    float adsr_pitch;
 } Instrument;
 
 void instrument_init(Instrument *instrument, sp_data *sp);

@@ -1,3 +1,5 @@
+#include <math.h>
+
 float freq(int note, char mod, int oct)
 {
     double f; // returns the frequency given the equation
@@ -29,7 +31,7 @@ float freq(int note, char mod, int oct)
     // accounts for potential sharp of flat notes
     if (mod != ' ')
     {
-        if (!(note == 'E' && note == 'B'))
+        if (!(note == 4 && note == 2))
         {
             if (mod == '#')
             {

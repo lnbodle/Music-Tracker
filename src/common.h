@@ -3,8 +3,8 @@
 
 #include <SDL2/SDL.h>
 
-#define SCREEN_WIDTH 320
-#define SCREEN_HEIGHT 240
+#define SCREEN_WIDTH 640
+#define SCREEN_HEIGHT 480
 
 #define AUDIO_DEVICE 0
 #define CHANNELS 1
@@ -18,14 +18,11 @@
 #define INSTRUMENT_NUMBER 4
 #define NOTE_NUMBER 8
 
-enum {
-    Up,
-    Down,
-    Left,
-    Right,
-    Shift,
-    Action_1,
-    Action_2
-};
+#define COLOR_FRONT 0xE7751C
+#define COLOR_BACK  0x171717
+
+#define FONT_WIDTH 9
+#define FONT_HEIGHT 16
+#define PADDING 8
 
 #endif

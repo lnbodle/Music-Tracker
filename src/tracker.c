@@ -9,14 +9,20 @@
 #include "instrument.h"
 #include "common.h"
 #include "view/phrase_view.h"
+#include "view/instrument_view.h"
+#include "event/phrase_event.h"
+#include "event/instrument_event.h"
 
 void tracker_init(Tracker *tracker)
 {
-    tracker->tempo = 120;
+    tracker->tempo = 480;
     tracker->phrase_index = 0;
     tracker->step_index = 0;
 
-    tracker->edit_mode = MODE_EDIT_TRACKER;
+    tracker->tracker_mode = TRACKER_EDIT_PHRASE;
+    tracker->instrument_mode = INSTRUMENT_ATTACK;
+    tracker->phrase_mode = PHRASE_EDIT_NOTE; // maybe be in phrase but seems useless ?
+
     tracker->is_playing = 0;
 
     audio_init(&tracker->audio);
@@ -41,25 +47,22 @@ void tracker_free(Tracker *tracker)
 
 void tracker_draw(SDL_Renderer *renderer, Tracker *tracker)
 {
-    SDL_Rect rect = {0, SCREEN_WIDTH - 64, SCREEN_WIDTH, 64};
+    SDL_Rect rect = {0, SCREEN_HEIGHT - 48, SCREEN_WIDTH, 48};
     draw_wave_form(renderer, &rect, &tracker->audio.buffers[0], 512);
-
-    char *mode;
-    switch (tracker->edit_mode)
+    
+    switch (tracker->tracker_mode)
     {
-    case MODE_EDIT_TRACKER:
-        mode = "TRACKER";
+    case TRACKER_EDIT_PHRASE:
+        phrase_view(tracker, renderer);
         break;
-    case MODE_EDIT_PHRASE:
-        mode = "PHRASE";
+
+    case TRACKER_EDIT_INSTRUMENT:
+        instrument_view(tracker, renderer);
         break;
-    case MODE_EDIT_INSTRUMENT:
-        mode = "INSTRUMENT";
+
+    default:
+        break;
     }
-
-    draw_text(renderer, mode, SCREEN_WIDTH - strlen(mode) * 8, 0);
-
-    phrase_view(tracker, renderer);
 }
 
 void tracker_tick(Tracker *tracker, int time)
@@ -75,22 +78,16 @@ void tracker_tick(Tracker *tracker, int time)
 
 void tracker_tick_phrases(Tracker *tracker)
 {
-    for (int i = 0; i < PHRASE_NUMBER; i++)
+    Phrase *phrase = &tracker->phrases[tracker->phrase_index];
+    Step *current_step = &phrase->steps[phrase->step_index];
+
+    if (current_step->note != 0)
     {
-        Phrase *phrase = &tracker->phrases[i];
-
-        phrase->step_index = increase_index(phrase->step_index, STEP_NUMBER);
-
-        Step *current_step = &phrase->steps[phrase->step_index];
-
-        instrument_off(&tracker->audio.instruments[current_step->instrument_id]); //Need to be a note parameter (length)
-
-        if (current_step->note != 0)
-        {
-            float frequency = freq(current_step->note, ' ', current_step->octave);
-            instrument_on(&tracker->audio.instruments[current_step->instrument_id], frequency);
-        }
+        float frequency = freq(current_step->note, ' ', current_step->octave);
+        instrument_on(&tracker->audio.instruments[current_step->instrument_id], frequency);
     }
+
+    phrase->step_index = increase_index(phrase->step_index, STEP_NUMBER);
 }
 
 void tracker_reset_phrases(Tracker *tracker)
@@ -101,91 +98,24 @@ void tracker_reset_phrases(Tracker *tracker)
     }
 }
 
-void tracker_event(Tracker *tracker, int *states)
+void tracker_event(Tracker *tracker)
 {
-
-    Phrase *phrase = &tracker->phrases[tracker->phrase_index];
-    Step *current_step = &phrase->steps[tracker->step_index];
-
-    switch (tracker->edit_mode)
+    if (event_key_down(&tracker->event, Action_1))
     {
+        tracker->is_playing = !tracker->is_playing;
+        tracker_reset_phrases(tracker);
+    }
 
-    case MODE_EDIT_TRACKER:
-
-        if (states[Action_1])
-        {
-
-            if (states[Shift])
-            {
-                tracker->edit_mode = MODE_EDIT_PHRASE;
-            }
-            else
-            {
-                tracker->is_playing = !tracker->is_playing;
-                tracker_reset_phrases(tracker);
-            }
-        }
-
-        if (states[Right])
-        {
-            
-            tracker->phrase_index = increase_index(tracker->phrase_index, STEP_NUMBER);
-        }
-
-        if (states[Left])
-        {
-            
-            tracker->phrase_index = decrease_index(tracker->phrase_index, STEP_NUMBER); 
-        }
-
+    switch (tracker->tracker_mode)
+    {
+    case TRACKER_EDIT_PHRASE:
+        phrase_event(tracker);
         break;
-
-    case MODE_EDIT_PHRASE:
-
-        if (states[Shift] && states[Action_1])
-        {
-            tracker->edit_mode = MODE_EDIT_TRACKER;
-        }
-
-        if (states[Down])
-        {
-            tracker->step_index = increase_index(tracker->step_index, STEP_NUMBER);
-        }
-
-        if (states[Up])
-        {
-            tracker->step_index = decrease_index(tracker->step_index, STEP_NUMBER);
-        }
-
-        if (states[Right])
-        {
-
-            if (states[Shift])
-            {
-                current_step->octave--;
-            }
-            else
-            {
-                current_step->note = increase_index(current_step->note, NOTE_NUMBER);
-            }
-        }
-
-        if (states[Left])
-        {
-            if (states[Shift])
-            {
-                current_step->octave++;
-            }
-            else
-            {
-                current_step->note = decrease_index(current_step->note, NOTE_NUMBER);
-            }
-        }
-
+    case TRACKER_EDIT_INSTRUMENT:
+        instrument_event(tracker);
         break;
 
     default:
-
         break;
     }
 }
